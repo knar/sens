@@ -1,19 +1,18 @@
 <template>
-  <b-container><b-row>
-    <ProfileEditor
-      :profProps="profileEditorProps"
-      :dpi="dpi"
-      :rename="rename"
-      :converting="converting" @update="onConvertingUpdate"
-    />
-    <div v-if="converting">
-      <ConversionEditor
-        :convProps="conversionEditorProps"
-        :dpi="dpi"
+  <b-container>
+    <b-row>
+      <ProfileEditor
+        :activeProfileId="profileId"
+        :profiles="profiles"
+        :types="types"
+        :converting="converting"
+        @update="onConvertingUpdate"
       />
-    </div>
-  </b-row></b-container>
-  
+      <div v-if="converting">
+        <ConversionEditor :convProps="conversionEditorProps" :dpi="dpi" />
+      </div>
+    </b-row>
+  </b-container>
 </template>
 
 <script>
@@ -30,22 +29,45 @@ export default {
 
   data() {
     return {
-      profileEditorProps: {
-        profile: 0,
-        profiles: [
-          { value: 0, text: "Profile 1" },
-          { value: 1, text: "My Profile 2" },
-          { value: 2, text: "My Profile 3" }
-        ],
-        type: 1,
-        types: [
-          { value: 0, text: "Distance(cm) per 360" },
-          { value: 1, text: "Aiming.pro" },
-        ],
-        sens: 0.6138,
-        fov: 103,
-        fovType: 'h',
-      },
+      profileId: 0,
+      profiles: [
+        {
+          "id":0,
+          "name": "my valorant sens",
+          "type": "Valorant",
+          "sens": 0.5,
+          "fov_type": "h",
+          "fov_h": 103,
+          "cm_per_360": 32,
+          "dpi": 400,
+        },
+        {
+          "id": 1,
+          "name": "my CS:GO sens",
+          "type": "CS:GO",
+          "sens": 0.7,
+          "fov_h": 106,
+          "fov_type": "h",
+          "dpi": 400,
+          "cm_per_360": 28
+        },
+        {
+          "id": 2,
+          "name": "my Fortnite sens",
+          "type": "Fortnite",
+          "sens": 11.7,
+          "fov_h": 80,
+          "fov_type": "h",
+          "dpi": 400, 
+          "cm_per_360": 16
+        }
+      ],
+
+      types: [
+        "Valorant",
+        "CS:GO",
+        "Fortnite",
+      ],
 
       conversionEditorProps: {
         method: 1,
@@ -63,16 +85,14 @@ export default {
         fovType: 'h',
       },
 
-			dpi: 800,
-      rename: '',
-      converting: true,
+      converting: false,
     }
   },
 
   methods: {
     fetchProfiles() {
       return fetch('https://aiming.pro/api/v1/user/sensitivity/', { mode: 'no-cors' })
-        .then(response => console.log(response))
+        .then(console.log)
     },
 
     onConvertingUpdate() {

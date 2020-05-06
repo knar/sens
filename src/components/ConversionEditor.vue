@@ -9,21 +9,21 @@
 		</b-input-group>
 
 		<b-input-group prepend="Coefficient" class="mt-2">
-			<b-form-input id="range-2" v-model="convProps.coefficient" type="range" min="0" max="1" step="0.001"></b-form-input>
+			<b-form-input v-model="convProps.coefficient" type="range" min="0" max="1" step="0.001"></b-form-input>
 			<b-input-group-append>
 				<b-form-input v-model="convProps.coefficient" type="number" min="0" max="1" step="0.001"></b-form-input>
 			</b-input-group-append>
 		</b-input-group>
 
 		<b-input-group prepend="Sensitivity" class="mt-2">
-			<b-form-input id="range-2" v-model="convProps.sens" type="range" min="0.001" max="2" step="0.001"></b-form-input>
+			<b-form-input v-model="convProps.sens" type="range" min="0.001" max="2" step="0.001"></b-form-input>
 			<b-input-group-append>
 				<b-form-input v-model="convProps.sens" type="number" min="0.001" max="2" step="0.001"></b-form-input>
 			</b-input-group-append>
 		</b-input-group>
 
 		<b-input-group prepend="FoV" class="mt-2">
-			<b-form-input id="range-2" v-model="convProps.fov" type="range" min="60" max="120" step="1"></b-form-input>
+			<b-form-input v-model="convProps.fov" type="range" min="60" max="120" step="1"></b-form-input>
 			<b-input-group-append>
 				<b-form-input v-model="convProps.fov" type="number" min="60" max="120" step="1"></b-form-input>
 			</b-input-group-append>
@@ -31,14 +31,14 @@
 
 		<div v-if="showMore">
 			<b-input-group prepend="Cm/360" class="mt-2">
-				<b-form-input id="range-2" v-model="cm" type="range" min="0.001" max="100" step="0.001"></b-form-input>
+				<b-form-input v-model="cm" type="range" min="0.001" max="100" step="0.001"></b-form-input>
 				<b-input-group-append>
 					<b-form-input v-model="cm" type="number" min="0.001" max="100" step="0.001"></b-form-input>
 				</b-input-group-append>
 			</b-input-group>
 
 			<b-input-group prepend="DPI" class="mt-2">
-				<b-form-input id="range-2" v-model="dpi" type="range" min="100" max="3200" step="50"></b-form-input>
+				<b-form-input v-model="dpi" type="range" min="100" max="3200" step="50"></b-form-input>
 				<b-input-group-append>
 					<b-form-input v-model="dpi" type="number" min="100" max="3200" step="50"></b-form-input>
 				</b-input-group-append>
@@ -82,6 +82,7 @@ export default {
 	data() {
 		return {
 			showMore: false,
+			cm: 0,
 		}
 	},
 }
