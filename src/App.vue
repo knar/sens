@@ -1,24 +1,24 @@
 <template>
 	<div id="app">
-		<SensitivitySettings/>
+		<ProfileEditor/>
 	</div>
 </template>
 
 <script>
-import SensitivitySettings from './components/SensitivitySettings.vue'
+import ProfileEditor from './components/ProfileEditor.vue'
 
 export default {
 	name: 'App',
 
 	components: {
-		SensitivitySettings,
+		ProfileEditor,
 	}
 }
 </script>
 
 <style>
 	#app {
-		font-family: Avenir, Helvetica, Arial, sans-serif;
+		font-family: Arial, sans-serif;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 		color: #222;
