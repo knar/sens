@@ -1,22 +1,25 @@
 <template>
   <div>
     <!-- Game Type Dropdown-->
-    <b-form-group
-      class="mt-4"
-      label-size="sm"
-      label="Sensitivity Type"
-    >
-      <b-form-select
-        v-model="settings.type"
-        :options="typeOptions"
-      ></b-form-select>
-    </b-form-group>
+    <b-row>
+      <b-col class="mt-1">
+        <b-form-group
+          label-size="sm"
+          label="Type"
+        >
+          <b-form-select
+            v-model="settings.type"
+            :options="types"
+            @change="onTypeChange"
+          ></b-form-select>
+        </b-form-group>
+      </b-col>
+    </b-row>
 
     <b-row>
-      <b-col>
+      <b-col class="mt-1">
         <!-- Field of View Controls-->
         <b-form-group
-          class="mt-1"
           label-size="sm"
           label="Field of View"
         >
@@ -36,10 +39,9 @@
           </b-input-group>
         </b-form-group>
       </b-col>
-      <b-col>
+      <b-col class="mt-1">
         <!-- Sensitivity Controls-->
         <b-form-group
-          class="mt-1"
           label-size="sm"
           label="Sensitivity"
         >
@@ -49,16 +51,16 @@
             min="0.0001"
             max="10"
             step="0.01"
+            @change="onSensChange"
           ></b-form-input>
         </b-form-group>
       </b-col>
     </b-row>
 
     <b-row>
-      <b-col>
+      <b-col class="mt-1">
         <!-- DPI Controls -->
         <b-form-group
-          class="mt-1"
           label-size="sm"
           label="DPI"
         >
@@ -68,13 +70,13 @@
             min="100"
             max="6400"
             step="50"
+            @change="onDpiChange"
           ></b-form-input>
         </b-form-group>
       </b-col>
-      <b-col>
+      <b-col class="mt-1">
         <!-- Cm per 360 Controls-->
         <b-form-group
-          class="mt-1"
           label-size="sm"
           label="Cm per 360"
         >
@@ -85,6 +87,7 @@
               min="5"
               max="160"
               step="1"
+              @change="onCmChange"
             ></b-form-input>
             <b-input-group-append is-text>
               <b-form-checkbox switch class="mr-n2">
@@ -99,6 +102,8 @@
 </template>
 
 <script>
+import { sensFromRest, cmFromRest } from '../sensUtil.js'
+
 export default {
   name: "SensitivityForm",
   props: ["settings", "allowConvert"],
@@ -111,37 +116,52 @@ export default {
 
   computed: {
     typeOptions() {
-      return this.types.map(t => ({ value: t.name, text: t.name }))
+      return this.types.map(t => ({ value: t, text: t.name }))
     },
   },
 
   methods: {
-    onTypeChange() {},
+    onTypeChange() {
+      this.refreshSens()
+    },
     onFovChange() {},
-    onSensChange() {},
-    onDpiChange() {},
-    onCmChange() {},
+    onSensChange() {
+      this.refreshCm()
+    },
+    onDpiChange() {
+      this.refreshSens()
+    },
+    onCmChange() {
+      this.refreshSens()
+    },
 
-    fetchGameVars() {
+    refreshSens() {
+      this.settings.sens = sensFromRest(
+        this.settings.cm_per_360,
+        this.settings.dpi,
+        this.settings.type
+      )
+    },
+    
+    refreshCm(){
+      this.settings.cm_per_360 = cmFromRest(
+        this.settings.sens,
+        this.settings.dpi,
+        this.settings.type
+      )
+    },
+
+    fetchTypes() {
       return [
-        {
-          name: "Aiming.pro",
-          m_yaw: 360 / (1000 * 2 * Math.PI),
-        },
-        {
-          name: "Valorant",
-          m_yaw: 0.07,
-        },
-        {
-          name: "CS:GO",
-          m_yaw: 0.022,
-        }
+        "Aiming.pro",
+        "Valorant",
+        "CS:GO",
       ]
     }
   },
 
   mounted() {
-    this.types = this.fetchGameVars()
+    this.types = this.fetchTypes()
   }
 }
 </script>

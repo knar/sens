@@ -2,90 +2,77 @@
   <b-container>
     <b-row>
       <b-card class="mt-3 mr-3">
-        <b-row>
-          <b-col>
-            <h3>Profile</h3>
-          </b-col>
-          <b-col cols="8">
-            <div class="float-right">
+          <div class="profile-toolbar">
+            <b-button-group class="float-right">
               <!-- New Profile Button -->
               <b-button
-                variant="primary"
-                v-b-tooltip.hover
-                title="New Profile"
                 @click="onNewProfile"
               >
                 <i class="fas fa-plus-circle"></i>
               </b-button>
 
+              <!-- Delete Profile Button -->
+              <b-button
+                v-b-modal.delete-profile-modal
+              >
+                <i class="fas fa-trash-alt"></i>
+              </b-button>
+
+              <!-- Delete Modal -->
+              <b-modal
+                id="delete-profile-modal"
+                ok-variant="danger"
+                ok-title="Delete"
+                title="Deleting a Profile"
+                @ok="onProfileDelete"
+              >
+                Are you sure you want to delete "{{ selectedProfile.name }}"?
+              </b-modal>
+
               <!-- Set Active Profile Button -->
               <b-button
-                class="ml-2"
-                variant="success"
                 :disabled="isSelectedProfileActive"
                 @click="onProfileChoose"
               >
                 <i class="fas fa-check-circle"></i>
               </b-button>
-            </div>
-          </b-col>
-        </b-row>
-        <b-input-group>
-          
-          <!-- Selected Profile Name Editor -->
-          <b-form-input
-            v-if="profileNameEditing"
-            v-model="selectedProfile.name"
-            @change="onProfileNameChange"
-            @blur="onProfileNameChange"
-            autofocus
-          ></b-form-input>
 
-          <!-- Profile Dropdown -->
-          <b-form-select v-else v-model="selectedProfile" :options="profileOptions"></b-form-select>
+              <!-- Save Profile Button -->
+              <b-button
+                @click="onProfileSave"
+              >
+                <i class="fas fa-save"></i>
+              </b-button>
+            </b-button-group>
+          </div>
 
-          <b-input-group-append>
-            <!-- Edit Profile Name Button -->
-            <b-button
-              variant="warning" 
-              v-b-tooltip.hover
-              title="Edit Profile Name"
-              @click="onEditProfileName"
-            >
-              <i class="fas fa-pencil-alt"></i>
-            </b-button>
+        <b-form-group
+          label-size="lg"
+          label="Selected Profile"
+        >
+          <b-input-group>
+            <!-- Selected Profile Name Editor -->
+            <b-form-input
+              v-if="profileNameEditing"
+              v-model="selectedProfile.name"
+              @change="onProfileNameChange"
+              @blur="onProfileNameChange"
+              autofocus
+            ></b-form-input>
 
-            <!-- Delete Profile Button -->
-            <b-button
-              variant="danger"
-              v-b-tooltip.hover
-              title="Delete Profile"
-              v-b-modal.delete-profile-modal
-            >
-              <i class="fas fa-trash-alt"></i>
-            </b-button>
+            <!-- Profile Dropdown -->
+            <b-form-select v-else v-model="selectedProfile" :options="profileOptions"></b-form-select>
 
-            <!-- Delete Modal -->
-            <b-modal
-              id="delete-profile-modal"
-              ok-variant="danger"
-              ok-title="Delete"
-              title="Deleting a Profile"
-              @ok="onProfileDelete"
-            >
-              Are you sure you want to delete "{{ selectedProfile.name }}"?
-            </b-modal>
-
-            <b-button
-              variant="success"
-              v-b-tooltip.hover
-              title="Save Profile"
-              @click="onProfileSave"
-            >
-              <i class="fas fa-save"></i>
-            </b-button>
-          </b-input-group-append>
-        </b-input-group>
+            <b-input-group-append>
+              <!-- Edit Profile Name Button -->
+              <b-button
+                @click="onEditProfileName"
+              >
+                <i class="fas fa-pencil-alt"></i>
+              </b-button>
+            </b-input-group-append>
+          </b-input-group>
+        </b-form-group>
 
         <SensitivityForm
           :settings="selectedProfile.settings"
@@ -95,7 +82,6 @@
         <b-button-toolbar class="mt-2">
           <b-button-group>
             <b-button
-              variant="primary"
               @click="onConvert"
             >
               <i class="fas fa-exchange-alt"></i> Convert
@@ -311,4 +297,8 @@ export default {
 </script>
 
 <style scoped>
+.profile-toolbar {
+  position: absolute;
+  right: 20px;
+}
 </style>
