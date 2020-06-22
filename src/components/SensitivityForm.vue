@@ -9,8 +9,8 @@
         >
           <b-form-select
             v-model="settings.type"
-            :options="types"
-            @change="onTypeChange"
+            :options="sensTypes"
+            @change="onSensTypeChange"
           ></b-form-select>
         </b-form-group>
       </b-col>
@@ -18,29 +18,89 @@
 
     <b-row>
       <b-col class="mt-1">
-        <!-- Field of View Controls-->
+        <!-- FoV Type-->
+        <b-form-group
+          label-size="sm"
+          label="FoV Type"
+        >
+          <b-form-select
+            v-model="settings.fov_type"
+            :options="fovTypes"
+            @change="onFovTypeChange"
+          ></b-form-select>
+        </b-form-group>
+      </b-col>
+      <b-col class="mt-1">
+        <!-- Field of View -->
         <b-form-group
           label-size="sm"
           label="Field of View"
         >
-          <b-input-group>
-            <b-form-input
-              v-model="settings.fov_h"
-              type="number"
-              min="5"
-              max="160"
-              step="0.01"
-            ></b-form-input>
-            <b-input-group-append is-text>
-              <b-form-checkbox switch class="mr-n2">
-                <span class="sr-only"></span>
-              </b-form-checkbox>
-            </b-input-group-append>
-          </b-input-group>
+          <b-form-input
+            v-model="fov"
+            type="number"
+            min="1"
+            max="180"
+            step="0.01"
+            @change="onFovChange"
+          ></b-form-input>
+        </b-form-group>
+      </b-col>
+    </b-row>
+
+    <b-row v-if="fovTypeNeedsRes">
+      <b-col class="mt-1">
+        <!-- Resolution Width -->
+        <b-form-group
+          label-size="sm"
+          label="Resolution Width"
+        >
+          <b-form-input
+            v-model="resWidth"
+            type="number"
+            min="1"
+            max="3840"
+            step="1"
+            @change="onResWidthChange"
+          ></b-form-input>
         </b-form-group>
       </b-col>
       <b-col class="mt-1">
-        <!-- Sensitivity Controls-->
+        <!-- Resolution Height -->
+        <b-form-group
+          label-size="sm"
+          label="Resolution Height"
+        >
+          <b-form-input
+            v-model="resHeight"
+            type="number"
+            min="1"
+            max="2160"
+            step="1"
+            @change="onResHeightChange"
+          ></b-form-input>
+        </b-form-group>
+      </b-col>
+    </b-row>
+
+    <b-row>
+      <b-col class="mt-1">
+        <!-- Zoom Sens -->
+        <b-form-group
+          label-size="sm"
+          label="Zoom Multiplier"
+        >
+          <b-form-input
+            v-model="settings.fov_h"
+            type="number"
+            min="5"
+            max="160"
+            step="0.01"
+          ></b-form-input>
+        </b-form-group>
+      </b-col>
+      <b-col class="mt-1">
+        <!-- Sensitivity -->
         <b-form-group
           label-size="sm"
           label="Sensitivity"
@@ -48,16 +108,17 @@
           <b-form-input
             v-model="settings.sens"
             type="number"
-            min="0.0001"
+            min="0"
             max="10"
-            step="0.01"
+            step="0.001"
             @change="onSensChange"
+            :disabled="mode==='receive'"
           ></b-form-input>
         </b-form-group>
       </b-col>
     </b-row>
 
-    <b-row>
+    <b-row v-if="showAdvanced">
       <b-col class="mt-1">
         <!-- DPI Controls -->
         <b-form-group
@@ -80,21 +141,15 @@
           label-size="sm"
           label="Cm per 360"
         >
-          <b-input-group>
-            <b-form-input
-              v-model="settings.cm_per_360"
-              type="number"
-              min="5"
-              max="160"
-              step="1"
-              @change="onCmChange"
-            ></b-form-input>
-            <b-input-group-append is-text>
-              <b-form-checkbox switch class="mr-n2">
-                <span class="sr-only"></span>
-              </b-form-checkbox>
-            </b-input-group-append>
-          </b-input-group>
+          <b-form-input
+            v-model="settings.cm_per_360"
+            type="number"
+            min="1"
+            max="999"
+            step="0.01"
+            @change="onCmChange"
+            :disabled="mode==='receive'"
+          ></b-form-input>
         </b-form-group>
       </b-col>
     </b-row>
@@ -102,66 +157,111 @@
 </template>
 
 <script>
-import { sensFromRest, cmFromRest } from '../sensUtil.js'
+import {
+  getSensTypes,
+  getFovTypes,
+  fovTypesToHorz,
+  horzFovToTypes,
+  sensFromRest,
+  cmFromRest,
+  sensPrecision,
+  fovPrecision,
+  cmPrecision,
+  round
+} from '../sensUtil.js'
+import { fetchUnits } from '../db.js'
 
 export default {
   name: "SensitivityForm",
-  props: ["settings", "allowConvert"],
+  props: ["settings", "showAdvanced", "mode"],
 
   data() {
     return {
-      types: [],
+      sensTypes: [],
+      fovTypes: [],
+      fovType: "Horizontal",
+      fov: 103,
+      resWidth: 1920,
+      resHeight: 1080,
+      units: ""
     }
   },
 
+  async mounted() {
+    this.sensTypes = getSensTypes()
+    this.fovTypes = getFovTypes()
+    this.units = await fetchUnits()
+  },
+
   computed: {
-    typeOptions() {
-      return this.types.map(t => ({ value: t, text: t.name }))
+    fovTypeNeedsRes() {
+      return this.settings.fov_type != "Horizontal"
     },
   },
 
+  watch: {
+    settings: function() {
+      this.setFovFromHFov()
+    }
+  },
+
   methods: {
-    onTypeChange() {
+    onSensTypeChange() {
       this.refreshSens()
     },
-    onFovChange() {},
-    onSensChange() {
-      this.refreshCm()
+
+    
+    onFovTypeChange() {
+      this.setFovFromHFov()
     },
+
+    onFovChange() {
+      this.updateHFov()
+    },
+
+    onResWidthChange() {
+      this.updateHFov()
+    },
+
+    onResHeightChange()  {
+      this.updateHFov()
+    },
+
+    onSensChange() {
+      this.settings.cm_per_360 = round(cmFromRest(this.settings), cmPrecision)
+    },
+
     onDpiChange() {
       this.refreshSens()
     },
+
     onCmChange() {
       this.refreshSens()
     },
 
     refreshSens() {
-      this.settings.sens = sensFromRest(
-        this.settings.cm_per_360,
-        this.settings.dpi,
-        this.settings.type
-      )
-    },
-    
-    refreshCm(){
-      this.settings.cm_per_360 = cmFromRest(
-        this.settings.sens,
-        this.settings.dpi,
-        this.settings.type
-      )
+      this.settings.sens = round(sensFromRest(this.settings), sensPrecision)
     },
 
-    fetchTypes() {
-      return [
-        "Aiming.pro",
-        "Valorant",
-        "CS:GO",
-      ]
+    setFovFromHFov() {
+      this.fov = round(horzFovToTypes()[this.settings.fov_type](
+        this.settings.fov_h,
+        this.resWidth,
+        this.resHeight
+      ), fovPrecision)
+    },
+
+    updateHFov() {
+      this.settings.fov_h = round(fovTypesToHorz()[this.settings.fov_type](
+        this.fov,
+        this.resWidth,
+        this.resHeight
+      ), fovPrecision)
+
+      if (this.mode === 'receive') {
+        this.$emit('updatedFov')
+      }
     }
-  },
-
-  mounted() {
-    this.types = this.fetchTypes()
   }
 }
 </script>

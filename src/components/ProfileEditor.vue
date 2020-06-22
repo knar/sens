@@ -1,50 +1,55 @@
 <template>
   <b-container>
     <b-row>
-      <b-card class="mt-3 mr-3">
-          <div class="profile-toolbar">
-            <b-button-group class="float-right">
-              <!-- New Profile Button -->
-              <b-button
-                @click="onNewProfile"
-              >
-                <i class="fas fa-plus-circle"></i>
-              </b-button>
+      <b-card class="mt-3 mr-3 card">
+        <div class="profile-toolbar float-right">
+          <b-button-group class="mx-1">
+            <!-- Set Active Hipfire Profile Button -->
+            <b-button
+              :disabled="isSelectedProfileActiveHipfire"
+              @click="onChooseHipfireProfile"
+            >
+              Hipfire
+            </b-button>
 
-              <!-- Delete Profile Button -->
-              <b-button
-                v-b-modal.delete-profile-modal
-              >
-                <i class="fas fa-trash-alt"></i>
-              </b-button>
+            <!-- Set Active ADS Profile Button -->
+            <b-button
+              :disabled="isSelectedProfileActiveADS"
+              @click="onChooseADSProfile"
+            >
+              ADS
+            </b-button>
+          </b-button-group>
+          <b-button-group>
+            <!-- New Profile Button -->
+            <b-button @click="onNewProfile">
+              <i class="fas fa-plus-circle"></i>
+            </b-button>
 
-              <!-- Delete Modal -->
-              <b-modal
-                id="delete-profile-modal"
-                ok-variant="danger"
-                ok-title="Delete"
-                title="Deleting a Profile"
-                @ok="onProfileDelete"
-              >
-                Are you sure you want to delete "{{ selectedProfile.name }}"?
-              </b-modal>
+            <!-- Delete Profile Button -->
+            <b-button v-b-modal.delete-profile-modal>
+              <i class="fas fa-trash-alt"></i>
+            </b-button>
 
-              <!-- Set Active Profile Button -->
-              <b-button
-                :disabled="isSelectedProfileActive"
-                @click="onProfileChoose"
-              >
-                <i class="fas fa-check-circle"></i>
-              </b-button>
+            <!-- Delete Modal -->
+            <b-modal
+              id="delete-profile-modal"
+              ok-variant="danger"
+              ok-title="Delete"
+              title="Deleting a Profile"
+              @ok="onProfileDelete"
+            >
+              Are you sure you want to delete "{{ selectedProfile.name }}"?
+            </b-modal>
 
-              <!-- Save Profile Button -->
-              <b-button
-                @click="onProfileSave"
-              >
-                <i class="fas fa-save"></i>
-              </b-button>
-            </b-button-group>
-          </div>
+            <!-- Save Profile Button -->
+            <b-button
+              @click="onProfileSave"
+            >
+              <i class="fas fa-save"></i>
+            </b-button>
+          </b-button-group>
+        </div>
 
         <b-form-group
           label-size="lg"
@@ -76,79 +81,95 @@
 
         <SensitivityForm
           :settings="selectedProfile.settings"
-          :allowConvert=true
+          :showAdvanced="showAdvanced"
         />
 
-        <b-button-toolbar class="mt-2">
-          <b-button-group>
-            <b-button
-              @click="onConvert"
-            >
-              <i class="fas fa-exchange-alt"></i> Convert
-            </b-button>
-          </b-button-group>
-        </b-button-toolbar>
+        <b-row>
+          <b-col>
+            <div class="float-right">
+              <b-button @click="onAdvanced">
+                <i class="fas fa-brain"></i> {{ showAdvanced ? 'Simple' : 'Advanced' }}
+              </b-button>
+
+              <b-button class="ml-1"
+                :disabled="converting"
+                @click="onConvert"
+              >
+                <i class="fas fa-exchange-alt"></i> Convert
+              </b-button>
+            </div>
+          </b-col>
+        </b-row>
 
       </b-card>
+
+      <b-card v-if="converting" class="mt-3 card">
+        <ConversionForm
+          :baseSettings="selectedProfile.settings"
+          :showAdvanced="showAdvanced"
+          @saveAsNewProfile="saveConvertedSettings"
+        />
+      </b-card>
+
     </b-row>
   </b-container>
 </template>
 
 <script>
+import { fetchProfiles, fetchActiveProfileId } from '../db.js'
 import SensitivityForm from './SensitivityForm.vue'
+import ConversionForm from './ConversionForm.vue'
 
 export default {
   name: "ProfileEditor",
 
   components: {
-    SensitivityForm
+    SensitivityForm,
+    ConversionForm,
   },
 
   data() {
     return {
-      activeProfile: {
-        id: -1,
-        name: "",
-        settings: {
-          type: "Aiming.pro",
-          sens: 0.5,
-          fov_h: 103,
-          fov_type: "h",
-          cm_per_360: 40,
-          dpi: 800
-        }
-      },
       selectedProfile: {
         id: -1,
         name: "",
         settings: {
-          type: "Aiming.pro",
-          sens: 0.5,
-          fov_h: 103,
-          fov_type: "h",
-          cm_per_360: 40,
-          dpi: 800
+          type: "",
+          sens: 0,
+          fov_h: 0,
+          fov_type: "Horizontal",
+          cm_per_360: 0,
+          dpi: 0
         }
       },
+      activeHipfireProfile: this.selectedProfile,
+      activeADSProfile: this.selectedProfile,
       profiles: [],
-      unitPref: "",
       profileNameEditing: false,
+      showAdvanced: false,
       converting: false
     };
   },
 
   computed: {
-    isSelectedProfileActive() {
-      return this.activeProfile === this.selectedProfile
+    isSelectedProfileActiveHipfire() {
+      return this.activeHipfireProfile === this.selectedProfile
     },
+
+    isSelectedProfileActiveADS() {
+      return this.activeADSProfile === this.selectedProfile
+    },
+
     profileOptions() {
-      // TODO: highlight active profile in some way
       return this.profiles.map(p => {
-        if (p == this.activeProfile) {
-          return { value: p, text: p.name + ' - Active'}
-        }
-        return { value: p, text: p.name }
-      });
+        let profileName = p.name
+        if (p == this.activeHipfireProfile)
+          profileName += ' - Hipfire'
+        if (p == this.activeADSProfile)
+          profileName += ' - ADS'
+        
+        return { value: p, text: profileName }
+      })
     },
   },
 
@@ -178,9 +199,13 @@ export default {
       // TODO: api call to overwrite selected profile
     },
 
-    onProfileChoose() {
-      this.activeProfile = this.selectedProfile
+    onChooseHipfireProfile() {
+      this.activeHipfireProfile = this.selectedProfile
       // TODO: api call to overwrite active profile id with selected's
+    },
+
+    onChooseADSProfile() {
+      this.activeADSProfile = this.selectedProfile
     },
 
     onNewProfile() {
@@ -203,22 +228,26 @@ export default {
       this.profileNameEditing = !this.profileNameEditing;
     },
 
-    onConvert() {
-      this.$emit("update", this.converting);
+    onAdvanced() {
+      this.showAdvanced = !this.showAdvanced
     },
 
-    addNewProfile(name) {
+    onConvert() {
+      this.converting = true;
+    },
+
+    addNewProfile(name, s) {
       const profile = {
         id: this.nextAvailableId(),
         name: name,
-        settings: {
+        settings: (s ? s : {
           type: "Aiming.pro",
           sens: 0.5,
           fov_h: 103,
-          fov_type: "h",
-          cm_per_360: 40,
+          fov_type: "Horizontal",
+          cm_per_360: 39.9,
           dpi: 800
-        }
+        })
       }
       this.profiles.push(profile)
       return profile
@@ -228,70 +257,15 @@ export default {
       return this.profiles.find(p => (p.id == id))
     },
 
-    // Dummy data to simulate inital API GETs
-    // TODO: actual API calls, put these in another file
-    fetchActiveProfileId() {
-      return 0
-    },
-    fetchProfiles() {
-      return [
-        {
-          "id":0,
-          "name": "my valorant sens",
-          "type": "Valorant",
-          "sens": 0.502,
-          "fov_type": "h",
-          "fov_h": 103,
-          "cm_per_360": 32.5,
-          "dpi": 800,
-        },
-        {
-          "id": 1,
-          "name": "my CS:GO sens",
-          "type": "CS:GO",
-          "sens": 0.7,
-          "fov_h": 106,
-          "fov_type": "h",
-          "dpi": 400,
-          "cm_per_360": 28
-        },
-        {
-          "id": 2,
-          "name": "my Fortnite sens",
-          "type": "Fortnite",
-          "sens": 11.7,
-          "fov_h": 80,
-          "fov_type": "h",
-          "dpi": 400, 
-          "cm_per_360": 16
-        }
-      ]
-    },
-    fetchUnitPref() {
-      return { "unit": "cm" }
-    },
+    saveConvertedSettings(s) {
+      this.addNewProfile(this.selectedProfile.name + " (converted)", s)
+    }
   },
 
-  mounted() {
-    // These will all use API calls later
-    this.profiles = this.fetchProfiles().map(p => ({
-      id: p.id,
-      name: p.name,
-      settings: {
-        type: p.type,
-        sens: p.sens,
-        fov_h: p.fov_h,
-        fov_type: p.fov_type,
-        dpi: p.dpi,
-        cm_per_360: p.cm_per_360
-      }
-    }))
-
-    this.activeProfile = this.getProfile(this.fetchActiveProfileId())
-
+  async mounted() {
+    this.profiles = await fetchProfiles()
+    this.activeProfile = this.getProfile(await fetchActiveProfileId())
     this.selectedProfile = this.activeProfile
-
-    this.unitPref = this.fetchUnitPref()
   }
 };
 </script>
@@ -300,5 +274,8 @@ export default {
 .profile-toolbar {
   position: absolute;
   right: 20px;
+}
+.card {
+  width: 450px;
 }
 </style>
