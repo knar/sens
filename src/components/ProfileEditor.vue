@@ -92,7 +92,6 @@
               </b-button>
 
               <b-button class="ml-1"
-                :disabled="converting"
                 @click="onConvert"
               >
                 <i class="fas fa-exchange-alt"></i> Convert
@@ -116,7 +115,7 @@
 </template>
 
 <script>
-import { fetchProfiles, fetchActiveProfileId } from '../db.js'
+import * as db from '../db.js'
 import SensitivityForm from './SensitivityForm.vue'
 import ConversionForm from './ConversionForm.vue'
 
@@ -176,10 +175,13 @@ export default {
   methods: {
     onProfileNameChange() {
       this.profileNameEditing = false;
-      // TODO: api call to overwrite selected profile
+
+      db.editProfile(this.selectedProfile)
     },
 
     onProfileDelete() {
+      db.deleteProfile(this.selectedProfile.id)
+
       this.profiles = this.profiles.filter(p => p != this.selectedProfile)
 
       if (this.profiles.length == 0) {
@@ -187,7 +189,6 @@ export default {
       }
 
       this.selectedProfile = this.profiles[0]
-      // TODO: api call to delete selected profile
 
       if (!this.getProfile(this.activeProfile.id)) {
         this.activeProfile = this.selectedProfile
@@ -196,7 +197,7 @@ export default {
     },
 
     onProfileSave() {
-      // TODO: api call to overwrite selected profile
+      db.editProfile(this.selectedProfile)
     },
 
     onChooseHipfireProfile() {
@@ -208,20 +209,8 @@ export default {
       this.activeADSProfile = this.selectedProfile
     },
 
-    onNewProfile() {
-      this.selectedProfile = this.addNewProfile("New")
-      // TODO: api call to add new profile
-    },
-
-    nextAvailableId() {
-      const ids = this.profiles.map(p => p.id)
-      ids.sort()
-
-      for (let id = 0; id < ids.length; id++) {
-        if (ids[id] != id)
-          return id
-      }
-      return ids.length
+    async onNewProfile() {
+      this.selectedProfile = await this.addNewProfile("New")
     },
 
     onEditProfileName() {
@@ -233,12 +222,11 @@ export default {
     },
 
     onConvert() {
-      this.converting = true;
+      this.converting = !this.converting;
     },
 
-    addNewProfile(name, s) {
-      const profile = {
-        id: this.nextAvailableId(),
+    async addNewProfile(name, s) {
+      let profile = {
         name: name,
         settings: (s ? s : {
           type: "Aiming.pro",
@@ -249,7 +237,10 @@ export default {
           dpi: 800
         })
       }
+      profile = db.packProfile(await db.createProfile(profile))
+
       this.profiles.push(profile)
+
       return profile
     },
 
@@ -263,8 +254,8 @@ export default {
   },
 
   async mounted() {
-    this.profiles = await fetchProfiles()
-    this.activeProfile = this.getProfile(await fetchActiveProfileId())
+    this.profiles = await db.fetchProfiles()
+    this.activeProfile = this.getProfile(await db.fetchActiveProfileId())
     this.selectedProfile = this.activeProfile
   }
 };

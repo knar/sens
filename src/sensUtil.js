@@ -24,9 +24,9 @@ function sensTypesCoef() {
 
 export function getMatchMethods() {
   return [
-    "Match 360 Distance",
-    "Match at Crosshair",
-    "Monitor Distance Match"
+    "360 Distance Matching",
+    "Focal Length Scaling",
+    "Monitor Distance Matching"
   ]
 }
 

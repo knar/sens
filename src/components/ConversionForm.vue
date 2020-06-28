@@ -72,6 +72,7 @@ export default {
       this.convertedSettings.cm_per_360 = cmFromMethod(this.method, 0.5, this.baseSettings, this.convertedSettings)
       this.convertedSettings.sens = round(sensFromRest(this.convertedSettings), sensPrecision)
       this.convertedSettings.cm_per_360 = round(this.convertedSettings.cm_per_360, cmPrecision)
+      console.log(this.convertedSettings)
     },
 
     onSaveAsNewProfile() {
